@@ -117,6 +117,36 @@ def _libreoffice_convert(input_path, target_format, output_dir, timeout=180):
     return str(output_path.resolve())
 
 
+def merge_docx(input_paths, output_dir):
+    """
+    Birden fazla .docx dosyasını docxcompose ile sadık şekilde birleştirir:
+    görseller, tablolar, stiller ve numaralandırma korunur.
+    input_paths: sırayla birleştirilecek .docx yollarının listesi.
+    """
+    from docx import Document
+    from docxcompose.composer import Composer
+
+    if len(input_paths) < 2:
+        raise ConversionError("Birleştirme için en az iki .docx dosyası gerekli.")
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    master = Document(str(input_paths[0]))
+    composer = Composer(master)
+
+    for path in input_paths[1:]:
+        doc = Document(str(path))
+        composer.append(doc)
+
+    output_path = output_dir / "birlestirilmis.docx"
+    composer.save(str(output_path))
+
+    if not output_path.exists() or output_path.stat().st_size == 0:
+        raise ConversionError("Birleştirme çıktı üretemedi.")
+    return str(output_path.resolve())
+
+
 def _pdf2docx_convert(input_path, output_dir):
     """pdf2docx ile layout-korumalı dönüşüm: tablolar, sütunlar, fontlar korunur."""
     from pdf2docx import Converter

@@ -13,7 +13,6 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "multer": "^1.4.5-lts.1",
-    "docx-merger": "^1.2.2",
     "pdfjs-dist": "^4.0.379",
     "docx": "^8.5.0",
     "form-data": "^4.0.0"

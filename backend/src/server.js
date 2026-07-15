@@ -7,7 +7,6 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import crypto from 'node:crypto'
-import DocxMerger from 'docx-merger'
 import FormData from 'form-data'
 
 const execFileAsync = promisify(execFile)
@@ -21,7 +20,7 @@ app.use(cors())
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 } // dosya başına 50MB
+  limits: { fileSize: 200 * 1024 * 1024 } // dosya başına 200MB
 })
 
 // LibreOffice ile güvenilir çalışan yön: ofis/HTML -> PDF.
@@ -164,25 +163,31 @@ app.post('/pdfa', upload.single('file'), async (req, res) => {
   }
 })
 
-// ---- Word (docx) birleştirme ----
-app.post('/merge-docx', upload.array('files', 20), async (req, res) => {
+// ---- Word (docx) birleştirme (Python servisine proxy - docxcompose) ----
+app.post('/merge-docx', upload.array('files', 50), async (req, res) => {
   if (!req.files || req.files.length < 2) {
     return res.status(400).send('En az iki .docx dosyası gerekli.')
   }
   try {
-    const buffers = req.files.map((f) => f.buffer.toString('binary'))
-    const merger = new DocxMerger({}, buffers)
-    const merged = await new Promise((resolve, reject) => {
-      try {
-        merger.save('nodebuffer', (data) => resolve(data))
-      } catch (e) { reject(e) }
-    })
+    const form = new FormData()
+    for (const f of req.files) {
+      form.append('files', f.buffer, { filename: f.originalname })
+    }
+
+    const { statusCode, body } = await submitForm(form, `${PYSERVICE_URL}/merge-docx`)
+
+    if (statusCode < 200 || statusCode >= 300) {
+      let msg = 'Word birleştirme başarısız oldu.'
+      try { msg = JSON.parse(body.toString('utf8')).error || msg } catch {}
+      return res.status(statusCode).send(msg)
+    }
+
     res.setHeader('Content-Disposition', 'attachment; filename="birlestirilmis.docx"')
     res.setHeader('Content-Type', mimeFor('docx'))
-    res.send(merged)
+    res.send(body)
   } catch (err) {
     logError('merge-docx', err)
-    res.status(500).send('Word birleştirme başarısız oldu. Dosyaların geçerli .docx olduğundan emin ol.')
+    res.status(502).send('Birleştirme servisine ulaşılamadı. Python servisinin çalıştığından emin ol.')
   }
 })
 

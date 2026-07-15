@@ -19,7 +19,7 @@ from app.converter import (
 app = Flask(__name__)
 CORS(app)
 
-MAX_CONTENT_LENGTH = 60 * 1024 * 1024  # 60MB
+MAX_CONTENT_LENGTH = 200 * 1024 * 1024  # 200MB
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 
@@ -68,6 +68,31 @@ def convert_file():
         return jsonify({'error': str(e)}), 500
     except Exception as e:
         return jsonify({'error': f'Beklenmeyen hata: {e}'}), 500
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+@app.route('/merge-docx', methods=['POST'])
+def merge_docx_endpoint():
+    files = request.files.getlist('files')
+    if not files or len(files) < 2:
+        return jsonify({'error': 'En az iki .docx dosyası gerekli.'}), 400
+
+    tmpdir = tempfile.mkdtemp(prefix='docx_merge_')
+    try:
+        input_paths = []
+        for i, f in enumerate(files):
+            if not f.filename.lower().endswith('.docx'):
+                return jsonify({'error': f'Yalnızca .docx desteklenir: {f.filename}'}), 400
+            p = os.path.join(tmpdir, f'input_{i:03d}.docx')
+            f.save(p)
+            input_paths.append(p)
+
+        from app.converter import merge_docx
+        output_path = merge_docx(input_paths, tmpdir)
+        return send_file(output_path, as_attachment=True, download_name='birlestirilmis.docx')
+    except Exception as e:
+        return jsonify({'error': f'Birleştirme başarısız: {e}'}), 500
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
