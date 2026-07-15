@@ -1,0 +1,21 @@
+{
+  "name": "open-pdf-toolkit-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Ofis dosyası dönüştürme için ince API katmanı (Gotenberg'e proxy).",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "docx-merger": "^1.2.2",
+    "pdfjs-dist": "^4.0.379",
+    "docx": "^8.5.0",
+    "form-data": "^4.0.0"
+  }
+}

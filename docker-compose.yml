@@ -1,0 +1,33 @@
+# Geliştirme / kendi sunucunda derleme için: kodu yerelde build eder.
+# Hazır imajları çekmek için: docker-compose.pull.yml kullan.
+services:
+  pyservice:
+    build: ./pyservice
+    image: ghcr.io/omerturhann/open-pdf-toolkit-pyservice:latest
+    expose:
+      - "5001"
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    image: ghcr.io/omerturhann/open-pdf-toolkit-backend:latest
+    ports:
+      - "8787:8787"
+    environment:
+      - PYSERVICE_URL=http://pyservice:5001
+    depends_on:
+      - pyservice
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: ghcr.io/omerturhann/open-pdf-toolkit-frontend:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# Kullanım (yerel derleme):
+#   docker compose up --build
+# Arayüz: http://localhost:8080

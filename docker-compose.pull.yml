@@ -1,0 +1,30 @@
+# Salt-çekme: kod derlemeden, GHCR'den hazır imajları indirip çalıştırır.
+# Kullanıcılar için en kolay yol.
+#
+# Kullanım:
+#   OWNER=github-kullanici-adin docker compose -f docker-compose.pull.yml up -d
+# ya da aşağıdaki OWNER değerlerini elle düzenle.
+services:
+  pyservice:
+    image: ghcr.io/${OWNER:-OWNER}/open-pdf-toolkit-pyservice:latest
+    expose:
+      - "5001"
+    restart: unless-stopped
+
+  backend:
+    image: ghcr.io/${OWNER:-OWNER}/open-pdf-toolkit-backend:latest
+    ports:
+      - "8787:8787"
+    environment:
+      - PYSERVICE_URL=http://pyservice:5001
+    depends_on:
+      - pyservice
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/${OWNER:-OWNER}/open-pdf-toolkit-frontend:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
