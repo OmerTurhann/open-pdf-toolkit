@@ -88,18 +88,6 @@ docker compose build
 docker compose push
 ```
 
-### İmajları herkese açık yapma
-
-GHCR'de imajlar varsayılan olarak **private** başlar. Herkesin `docker pull`
-yapabilmesi için: GitHub profilin → Packages → ilgili paket → Package settings →
-Change visibility → Public.
-
-### Notlar
-
-- İlk `workflow` çalışması için repoda **Settings → Actions → General → Workflow
-  permissions** kısmında "Read and write permissions" seçili olmalı.
-- Multi-platform (amd64 + arm64) imajlar üretilir; hem Intel/AMD sunucular hem
-  Apple Silicon / ARM sunucularda çalışır.
 
 ## Geliştirme modu
 
